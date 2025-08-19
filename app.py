@@ -273,38 +273,40 @@ def setup_request_logging(app: Flask) -> None:
         logger.info(f"Response: {response.status_code} for {request.method} {request.path} from {user_info}")
         
         return response
-
-# Health check and monitoring endpoints
-@app.route('/health')
-def health():
-    """Health check endpoint for load balancers."""
-    return jsonify({
-        'status': 'healthy',
-        'service': 'mirroros-public-api',
-        'version': '1.0.0',
-        'environment': app.config.get('ENVIRONMENT', 'unknown')
-    })
-
-@app.route('/metrics')
-def metrics():
-    """Basic metrics endpoint."""
-    from database.models import User
-    from sqlalchemy import func
     
-    try:
-        total_users = User.query.count()
-        active_users = User.query.filter(User.is_active == True).count()
-        
+    # Health check and monitoring endpoints
+    @app.route('/health')
+    def health():
+        """Health check endpoint for load balancers."""
         return jsonify({
-            'users': {
-                'total': total_users,
-                'active': active_users
-            },
-            'status': 'operational'
+            'status': 'healthy',
+            'service': 'mirroros-public-api',
+            'version': '1.0.0',
+            'environment': app.config.get('ENVIRONMENT', 'unknown')
         })
-    except Exception as e:
-        logger.error(f"Metrics error: {str(e)}")
-        return jsonify({'status': 'error'}), 500
+
+    @app.route('/metrics')
+    def metrics():
+        """Basic metrics endpoint."""
+        try:
+            from database.models import User
+            from sqlalchemy import func
+            
+            total_users = User.query.count()
+            active_users = User.query.filter(User.is_active == True).count()
+            
+            return jsonify({
+                'users': {
+                    'total': total_users,
+                    'active': active_users
+                },
+                'status': 'operational'
+            })
+        except Exception as e:
+            logger.error(f"Metrics error: {str(e)}")
+            return jsonify({'status': 'error'}), 500
+    
+    return app
 
 # Create application instance
 app = create_app()
