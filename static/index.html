@@ -1901,15 +1901,11 @@
                 process_steps: generateProcessSteps(params),
                 math_breakdown: generateMathBreakdown(prediction.probability),
                 target_analysis: {
-                    goal_difficulty: Math.random() * 0.5 + 0.3,
-                    user_leverage: Math.random() * 0.5 + 0.3,
-                    target_selectivity: Math.random() * 0.5 + 0.3
+                    goal_difficulty: apiData.goal_difficulty || 0.5,
+                    user_leverage: apiData.user_leverage || 0.3,
+                    target_selectivity: apiData.target_selectivity || 0.4
                 },
-                grounding_details: params.enhanced_grounding ? {
-                    studies_count: 4,
-                    coefficients_count: 12,
-                    primary_sources: 'Research Studies'
-                } : null
+                grounding_details: apiData.grounding_details || null
             };
         }
 
