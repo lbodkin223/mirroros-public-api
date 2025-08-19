@@ -193,6 +193,10 @@ def predict():
                 'message': 'Prediction service is not available'
             }), 503
         
+        # Ensure URL has proper scheme
+        if not private_api_url.startswith(('http://', 'https://')):
+            private_api_url = f'https://{private_api_url}'
+        
         # Add user context to request
         request_payload = {
             'user_id': str(user.id),
@@ -345,6 +349,10 @@ def prediction_health():
                 'status': 'unhealthy',
                 'message': 'Private API URL not configured'
             }), 503
+        
+        # Ensure URL has proper scheme
+        if not private_api_url.startswith(('http://', 'https://')):
+            private_api_url = f'https://{private_api_url}'
         
         # Quick health check to private server
         response = requests.get(
