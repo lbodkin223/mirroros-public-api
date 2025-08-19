@@ -59,5 +59,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Temporarily use minimal app to isolate deployment issues
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 --access-logfile - --error-logfile - app_minimal:app"]
+# Use full app instance with all routes including demo-login endpoint
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 --access-logfile - --error-logfile - app:app"]
