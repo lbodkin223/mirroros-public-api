@@ -10,7 +10,7 @@ import time
 import logging
 from datetime import timedelta
 from typing import Dict, Any
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
@@ -181,6 +181,17 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(payments_bp, url_prefix='/api/payments')
     app.register_blueprint(gateway_bp, url_prefix='/api')
+    
+    # Add static file serving
+    @app.route('/')
+    def index():
+        """Serve the main UI."""
+        return send_from_directory('static', 'index.html')
+    
+    @app.route('/<path:filename>')
+    def static_files(filename):
+        """Serve static files."""
+        return send_from_directory('static', filename)
 
 def register_error_handlers(app: Flask) -> None:
     """Register error handlers."""
