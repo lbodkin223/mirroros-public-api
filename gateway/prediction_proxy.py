@@ -216,7 +216,7 @@ def predict():
         if private_api_secret:
             try:
                 signer = RequestSigner(private_api_secret)
-                signature = signer.sign_request('POST', '/api/predict', request_payload)
+                signature = signer.sign_request('POST', '/predict', request_payload)
                 headers['X-Signature'] = signature
                 headers['X-Timestamp'] = str(int(time.time()))
             except Exception as e:
@@ -230,7 +230,7 @@ def predict():
         # Make request to private server
         try:
             response = requests.post(
-                f"{private_api_url}/api/predict",
+                f"{private_api_url}/predict",
                 json=request_payload,
                 headers=headers,
                 timeout=30  # 30 second timeout
