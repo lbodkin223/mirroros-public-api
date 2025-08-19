@@ -59,5 +59,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Use simple CMD that handles PORT env var
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 --access-logfile - --error-logfile - app:create_app"]
+# Use minimal app for testing deployment first
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 --access-logfile - --error-logfile - app_minimal:create_app"]
