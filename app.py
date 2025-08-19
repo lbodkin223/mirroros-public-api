@@ -6,6 +6,7 @@ Deployed to Railway/Heroku - contains NO proprietary algorithms.
 """
 
 import os
+import time
 import logging
 from datetime import timedelta
 from typing import Dict, Any
@@ -288,7 +289,6 @@ def metrics():
 app = create_app()
 
 if __name__ == '__main__':
-    import time
     
     port = int(os.getenv('PORT', 5000))
     debug = os.getenv('DEBUG', 'false').lower() == 'true'

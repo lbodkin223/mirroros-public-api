@@ -10,3 +10,5 @@ requests==2.31.0
 Flask-CORS==4.0.0
 python-dotenv==1.0.0
 stripe==7.8.0
+Flask-Limiter==3.5.0
+sentry-sdk[flask]==1.38.0
