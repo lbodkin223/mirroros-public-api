@@ -118,7 +118,7 @@ def load_config(app: Flask, config: Dict[str, Any] = None) -> None:
         app.config.update(config)
 
 def init_extensions(app: Flask) -> None:
-    """Initialize Flask extensions."""
+    """Initialize Flask extensions with graceful error handling."""
     # CORS for iOS app
     CORS(app, origins=[
         "https://mirroros.com",
@@ -128,25 +128,46 @@ def init_extensions(app: Flask) -> None:
         "ionic://localhost",      # Ionic
     ])
     
-    # Database
-    init_database(app)
+    try:
+        # Database
+        init_database(app)
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {str(e)}")
+        # Continue without database for now
     
-    # Authentication
-    init_auth(app)
+    try:
+        # Authentication
+        init_auth(app)
+        logger.info("Authentication initialized successfully")
+    except Exception as e:
+        logger.error(f"Authentication initialization failed: {str(e)}")
     
-    # Payments
-    init_payments(app)
+    try:
+        # Payments
+        init_payments(app)
+        logger.info("Payments initialized successfully")
+    except Exception as e:
+        logger.error(f"Payments initialization failed: {str(e)}")
     
-    # Security
-    init_security(app)
+    try:
+        # Security
+        init_security(app)
+        logger.info("Security initialized successfully")
+    except Exception as e:
+        logger.error(f"Security initialization failed: {str(e)}")
     
-    # Rate limiting
-    limiter = Limiter(
-        app,
-        key_func=get_user_rate_limit_key,
-        default_limits=["1000 per hour"]
-    )
-    app.limiter = limiter
+    try:
+        # Rate limiting
+        limiter = Limiter(
+            app,
+            key_func=get_user_rate_limit_key,
+            default_limits=["1000 per hour"]
+        )
+        app.limiter = limiter
+        logger.info("Rate limiter initialized successfully")
+    except Exception as e:
+        logger.error(f"Rate limiter initialization failed: {str(e)}")
 
 def get_user_rate_limit_key() -> str:
     """Get rate limit key based on authenticated user or IP."""
