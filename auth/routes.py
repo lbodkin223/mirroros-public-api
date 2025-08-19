@@ -545,6 +545,7 @@ def demo_login():
     """
     Create or login as a demo user for testing purposes.
     This endpoint is for development/demo use only.
+    Works without database if needed.
 
     Returns:
         200: Login successful with JWT tokens
@@ -553,55 +554,90 @@ def demo_login():
     try:
         demo_email = 'demo@mirroros.com'
         demo_password = 'demo123'
+        demo_user_id = 'demo-user-12345'
 
-        # Try to find existing demo user
-        user = User.query.filter_by(email=demo_email).first()
+        # Try database operations first, fall back to fake tokens if DB fails
+        try:
+            # Try to find existing demo user
+            user = User.query.filter_by(email=demo_email).first()
 
-        if not user:
-            # Create demo user if it doesn't exist
-            user = User(
-                email=demo_email,
-                password=demo_password,
-                full_name='Demo User'
+            if not user:
+                # Create demo user if it doesn't exist
+                user = User(
+                    email=demo_email,
+                    password=demo_password,
+                    full_name='Demo User'
+                )
+                user.is_verified = True  # Skip email verification for demo
+                user.tier = 'free'
+
+                db.session.add(user)
+                db.session.commit()
+                logger.info(f"Created new demo user: {demo_email}")
+
+            # Update last login
+            user.update_last_login()
+
+            # Create JWT tokens
+            access_token = create_access_token(
+                identity=str(user.id),
+                expires_delta=timedelta(hours=24)
             )
-            user.is_verified = True  # Skip email verification for demo
-            user.tier = 'free'
+            refresh_token = create_refresh_token(
+                identity=str(user.id),
+                expires_delta=timedelta(days=30)
+            )
 
-            db.session.add(user)
-            db.session.commit()
-            logger.info(f"Created new demo user: {demo_email}")
+            logger.info(f"Demo login successful with database: {demo_email}")
 
-        # Update last login
-        user.update_last_login()
+            return jsonify({
+                'message': 'Demo login successful',
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'user': {
+                    'id': str(user.id),
+                    'email': user.email,
+                    'full_name': user.full_name,
+                    'tier': user.tier,
+                    'is_verified': user.is_verified,
+                    'created_at': user.created_at.isoformat() if user.created_at else None
+                }
+            }), 200
 
-        # Create JWT tokens
-        access_token = create_access_token(
-            identity=str(user.id),
-            expires_delta=timedelta(hours=24)
-        )
-        refresh_token = create_refresh_token(
-            identity=str(user.id),
-            expires_delta=timedelta(days=30)
-        )
+        except Exception as db_error:
+            # Database failed, use fake tokens for demo
+            logger.warning(f"Database failed, using fake tokens: {str(db_error)}")
+            
+            # Create JWT tokens with demo user ID
+            access_token = create_access_token(
+                identity=demo_user_id,
+                expires_delta=timedelta(hours=24)
+            )
+            refresh_token = create_refresh_token(
+                identity=demo_user_id,
+                expires_delta=timedelta(days=30)
+            )
 
-        logger.info(f"Demo login successful for: {demo_email}")
-
-        return jsonify({
-            'message': 'Demo login successful',
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-            'user': {
-                'id': str(user.id),
-                'email': user.email,
-                'full_name': user.full_name,
-                'tier': user.tier,
-                'is_verified': user.is_verified,
-                'created_at': user.created_at.isoformat() if user.created_at else None
-            }
-        }), 200
+            return jsonify({
+                'message': 'Demo login successful (fallback mode)',
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'user': {
+                    'id': demo_user_id,
+                    'email': demo_email,
+                    'full_name': 'Demo User',
+                    'tier': 'free',
+                    'is_verified': True,
+                    'created_at': '2024-01-01T00:00:00'
+                }
+            }), 200
 
     except Exception as e:
-        db.session.rollback()
+        if 'db' in locals():
+            try:
+                db.session.rollback()
+            except:
+                pass
         logger.error(f"Demo login error: {str(e)}")
         return jsonify({
             'error': 'demo_login_failed',
