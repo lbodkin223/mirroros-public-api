@@ -539,3 +539,71 @@ def get_usage():
             'error': 'usage_fetch_failed',
             'message': 'Failed to fetch usage statistics'
         }), 500
+
+@auth_bp.route('/demo-login', methods=['POST'])
+def demo_login():
+    """
+    Create or login as a demo user for testing purposes.
+    This endpoint is for development/demo use only.
+
+    Returns:
+        200: Login successful with JWT tokens
+        500: Server error
+    """
+    try:
+        demo_email = 'demo@mirroros.com'
+        demo_password = 'demo123'
+
+        # Try to find existing demo user
+        user = User.query.filter_by(email=demo_email).first()
+
+        if not user:
+            # Create demo user if it doesn't exist
+            user = User(
+                email=demo_email,
+                password=demo_password,
+                full_name='Demo User'
+            )
+            user.is_verified = True  # Skip email verification for demo
+            user.tier = 'free'
+
+            db.session.add(user)
+            db.session.commit()
+            logger.info(f"Created new demo user: {demo_email}")
+
+        # Update last login
+        user.update_last_login()
+
+        # Create JWT tokens
+        access_token = create_access_token(
+            identity=str(user.id),
+            expires_delta=timedelta(hours=24)
+        )
+        refresh_token = create_refresh_token(
+            identity=str(user.id),
+            expires_delta=timedelta(days=30)
+        )
+
+        logger.info(f"Demo login successful for: {demo_email}")
+
+        return jsonify({
+            'message': 'Demo login successful',
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'user': {
+                'id': str(user.id),
+                'email': user.email,
+                'full_name': user.full_name,
+                'tier': user.tier,
+                'is_verified': user.is_verified,
+                'created_at': user.created_at.isoformat() if user.created_at else None
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Demo login error: {str(e)}")
+        return jsonify({
+            'error': 'demo_login_failed',
+            'message': 'Failed to create demo login'
+        }), 500
