@@ -47,6 +47,10 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 # Create app directory
 WORKDIR /app
 
+# Copy and setup start script BEFORE switching users
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
 # Copy application code
 COPY . /app/
 
@@ -62,9 +66,5 @@ EXPOSE 8000
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
-
-# Start command
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
 
 CMD ["/start.sh"]
