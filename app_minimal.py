@@ -37,6 +37,10 @@ def create_app():
     return app
 
 
+# Create the WSGI application instance
+app = create_app()
+
+
 # For development
 if __name__ == '__main__':
     app = create_app()
