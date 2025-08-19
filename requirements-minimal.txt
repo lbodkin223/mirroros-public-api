@@ -1,4 +1,4 @@
-# Minimal requirements for Railway deployment - Updated 2025
+# Minimal requirements for Railway deployment
 Flask==3.0.0
 gunicorn==21.2.0
 SQLAlchemy==2.0.23
