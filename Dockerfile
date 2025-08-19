@@ -59,5 +59,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Use debug app to isolate the crashing issue
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 --access-logfile - --error-logfile - app_debug:app"]
+# Use full app with graceful error handling and demo-login endpoint
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 --access-logfile - --error-logfile - app:app"]
