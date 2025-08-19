@@ -1,4 +1,4 @@
-# Multi-stage build for production optimization
+# Multi-stage build for production optimization - CACHE BUST 2025
 FROM python:3.11-slim as builder
 
 # Set environment variables
@@ -47,10 +47,6 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 # Create app directory
 WORKDIR /app
 
-# Copy and setup start script BEFORE switching users
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
 # Copy application code
 COPY . /app/
 
@@ -63,8 +59,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-CMD ["/start.sh"]
+# Use simple CMD that handles PORT env var
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 --access-logfile - --error-logfile - app:create_app"]
