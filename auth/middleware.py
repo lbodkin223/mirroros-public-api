@@ -39,15 +39,19 @@ def get_current_user() -> Optional[User]:
             from .models import User
             from datetime import datetime, timezone
             
-            class DemoUser(User):
+            class DemoUser:
                 def __init__(self):
-                    super().__init__(email='demo@mirroros.com', full_name='Demo User')
                     self.id = user_id
+                    self.email = 'demo@mirroros.com'
+                    self.full_name = 'Demo User'
                     self.tier = 'free'
                     self.is_verified = True
                     self.is_active = True
                     self.predictions_used_today = 0
                     self.last_reset_date = datetime.now(timezone.utc).date()
+                    self.created_at = datetime.now(timezone.utc)
+                    self.updated_at = datetime.now(timezone.utc)
+                    self.last_login_at = datetime.now(timezone.utc)
                 
                 def increment_prediction_usage(self) -> None:
                     """Mock increment for demo user."""
