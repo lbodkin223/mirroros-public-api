@@ -582,3 +582,45 @@ def demo_login():
             'error': 'demo_login_failed',
             'message': 'Demo login failed'
         }), 500
+
+@auth_bp.route('/admin/whitelist-add', methods=['POST'])
+def admin_add_to_whitelist():
+    """
+    Admin endpoint to add emails to whitelist for testing.
+    """
+    try:
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({'error': 'invalid_request', 'message': 'Request body must be valid JSON'}), 400
+        
+        email = data.get('email', '').strip().lower()
+        if not email:
+            return jsonify({'error': 'missing_email', 'message': 'Email is required'}), 400
+        
+        # Check if already whitelisted
+        existing = Whitelist.query.filter_by(email=email).first()
+        if existing:
+            return jsonify({'message': f'Email {email} is already whitelisted'}), 200
+        
+        # Add to whitelist
+        whitelist_entry = Whitelist(
+            email=email,
+            notes='Added via admin endpoint for testing',
+            is_used=False
+        )
+        db.session.add(whitelist_entry)
+        db.session.commit()
+        
+        logger.info(f"Email {email} added to whitelist via admin endpoint")
+        return jsonify({
+            'message': f'Email {email} added to whitelist successfully',
+            'email': email
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Admin whitelist add error: {str(e)}")
+        return jsonify({
+            'error': 'whitelist_add_failed',
+            'message': 'Failed to add email to whitelist'
+        }), 500
