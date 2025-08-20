@@ -42,6 +42,21 @@ def get_current_user() -> Optional[User]:
             demo_user.full_name = "Demo User"
             demo_user.tier = "free"
             demo_user.is_active = True
+            
+            # Add methods needed for demo user
+            def can_make_prediction():
+                return True  # Demo user has unlimited predictions
+            
+            def increment_prediction_usage():
+                pass  # No-op for demo user
+            
+            def get_tier_limits():
+                return {'predictions_per_day': -1, 'max_requests_per_hour': -1}
+            
+            demo_user.can_make_prediction = can_make_prediction
+            demo_user.increment_prediction_usage = increment_prediction_usage
+            demo_user.get_tier_limits = get_tier_limits
+            
             g.current_user = demo_user
             return demo_user
         
