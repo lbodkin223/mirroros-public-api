@@ -1,3 +1,0 @@
-This file forces Railway to rebuild from scratch and not use cached layers.
-Updated: 2025-08-19 to force rebuild with demo-login endpoint and proper app setup.
-FINAL FIX: 2025-08-19 - Full app with all dependencies and demo-login endpoint.

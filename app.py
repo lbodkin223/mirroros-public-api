@@ -153,17 +153,7 @@ def init_extensions(app: Flask) -> None:
     except Exception as e:
         logger.error(f"Security initialization failed: {str(e)}")
     
-    try:
-        # Rate limiting
-        limiter = Limiter(
-            app,
-            key_func=get_user_rate_limit_key,
-            default_limits=["1000 per hour"]
-        )
-        app.limiter = limiter
-        logger.info("Rate limiter initialized successfully")
-    except Exception as e:
-        logger.error(f"Rate limiter initialization failed: {str(e)}")
+    # Rate limiting is handled by utils.rate_limiter module
 
 def get_user_rate_limit_key() -> str:
     """Get rate limit key based on authenticated user or IP."""
@@ -281,37 +271,9 @@ def setup_request_logging(app: Flask) -> None:
         
         return response
     
-    # Health check and monitoring endpoints
-    @app.route('/health')
-    def health():
-        """Health check endpoint for load balancers."""
-        return jsonify({
-            'status': 'healthy',
-            'service': 'mirroros-public-api',
-            'version': '1.0.0',
-            'environment': app.config.get('ENVIRONMENT', 'unknown')
-        })
+    # Health check endpoint is provided by monitoring module
 
-    @app.route('/metrics')
-    def metrics():
-        """Basic metrics endpoint."""
-        try:
-            from database.models import User
-            from sqlalchemy import func
-            
-            total_users = User.query.count()
-            active_users = User.query.filter(User.is_active == True).count()
-            
-            return jsonify({
-                'users': {
-                    'total': total_users,
-                    'active': active_users
-                },
-                'status': 'operational'
-            })
-        except Exception as e:
-            logger.error(f"Metrics error: {str(e)}")
-            return jsonify({'status': 'error'}), 500
+    # Metrics endpoint is provided by monitoring module
     
     return app
 
