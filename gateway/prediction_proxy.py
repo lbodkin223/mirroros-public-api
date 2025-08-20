@@ -132,7 +132,7 @@ def log_prediction_request(user: User, request_data: Dict[str, Any], success: bo
         db.session.rollback()
 
 @prediction_proxy_bp.route('/predict', methods=['POST'])
-@check_rate_limit
+@require_auth
 def predict():
     """
     Proxy prediction requests to private server.
@@ -158,6 +158,26 @@ def predict():
     """
     start_time = time.time()
     user = get_current_user()
+    
+    # Check prediction-specific rate limits
+    try:
+        from utils.rate_limiter import check_prediction_limits
+        from utils.error_handlers import RateLimitError
+        
+        allowed, reason = check_prediction_limits(user)
+        if not allowed:
+            raise RateLimitError(reason)
+    except ImportError:
+        # Fallback to original rate limiting if new system not available
+        if not user.can_make_prediction():
+            limits = user.get_tier_limits()
+            return jsonify({
+                'error': 'rate_limit_exceeded',
+                'message': 'Daily prediction limit reached',
+                'current_usage': user.predictions_used_today,
+                'daily_limit': limits['predictions_per_day'],
+                'tier': user.tier
+            }), 429
     
     try:
         # Get and validate request data

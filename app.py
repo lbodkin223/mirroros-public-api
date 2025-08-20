@@ -52,22 +52,14 @@ def create_app(config: Dict[str, Any] = None) -> Flask:
     # Load configuration
     load_config(app, config)
     
-    # Initialize Sentry for error tracking
-    if app.config.get('SENTRY_DSN'):
-        sentry_sdk.init(
-            dsn=app.config['SENTRY_DSN'],
-            integrations=[FlaskIntegration()],
-            traces_sample_rate=0.1,
-        )
+    # Initialize monitoring and error tracking
+    init_monitoring_and_errors(app)
     
     # Initialize extensions
     init_extensions(app)
     
     # Register blueprints
     register_blueprints(app)
-    
-    # Register error handlers
-    register_error_handlers(app)
     
     # Add request logging
     setup_request_logging(app)
@@ -76,46 +68,50 @@ def create_app(config: Dict[str, Any] = None) -> Flask:
     return app
 
 def load_config(app: Flask, config: Dict[str, Any] = None) -> None:
-    """Load application configuration."""
-    # Default configuration
-    app.config.update({
-        'SECRET_KEY': os.getenv('SECRET_KEY', 'dev-secret-change-in-production'),
-        'DATABASE_URL': os.getenv('DATABASE_URL', 'postgresql://localhost/mirroros_public'),
-        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
-        'SQLALCHEMY_ENGINE_OPTIONS': {
-            'pool_pre_ping': True,
-            'pool_recycle': 300,
-        },
-        
-        # JWT Configuration
-        'JWT_SECRET_KEY': os.getenv('JWT_SECRET_KEY', 'jwt-secret-change-in-production'),
-        'JWT_ACCESS_TOKEN_EXPIRES': timedelta(hours=24),
-        'JWT_REFRESH_TOKEN_EXPIRES': timedelta(days=30),
-        
-        # Payment Configuration
-        'STRIPE_SECRET_KEY': os.getenv('STRIPE_SECRET_KEY'),
-        'STRIPE_WEBHOOK_SECRET': os.getenv('STRIPE_WEBHOOK_SECRET'),
-        'APPLE_BUNDLE_ID': os.getenv('APPLE_BUNDLE_ID', 'com.mirroros.app'),
-        
-        # Private API Configuration
-        'PRIVATE_API_URL': os.getenv('PRIVATE_API_URL', 'http://localhost:8000'),
-        'PRIVATE_API_SECRET': os.getenv('PRIVATE_API_SECRET'),
-        
-        # Rate Limiting
-        'RATELIMIT_STORAGE_URL': os.getenv('REDIS_URL', 'memory://'),
-        'RATELIMIT_DEFAULT': "1000 per hour",
-        
-        # Monitoring
-        'SENTRY_DSN': os.getenv('SENTRY_DSN'),
-        
-        # Environment
-        'ENVIRONMENT': os.getenv('ENVIRONMENT', 'development'),
-        'DEBUG': os.getenv('DEBUG', 'false').lower() == 'true',
-    })
+    """Load application configuration using environment-specific settings."""
+    from config.production import get_config
+    
+    # Get configuration class based on environment
+    config_class = get_config()
+    
+    # Load configuration from class
+    for key in dir(config_class):
+        if key.isupper() and not key.startswith('_'):
+            app.config[key] = getattr(config_class, key)
     
     # Override with provided config
     if config:
         app.config.update(config)
+    
+    # Set version if available
+    try:
+        from pathlib import Path
+        version_file = Path(__file__).parent / 'VERSION'
+        if version_file.exists():
+            app.config['VERSION'] = version_file.read_text().strip()
+    except Exception:
+        app.config['VERSION'] = 'unknown'
+
+def init_monitoring_and_errors(app: Flask) -> None:
+    """Initialize monitoring and error handling systems."""
+    try:
+        # Initialize monitoring
+        from config.monitoring import init_monitoring
+        init_monitoring(app)
+        
+        # Initialize error handlers
+        from utils.error_handlers import register_error_handlers
+        register_error_handlers(app)
+        
+        # Initialize rate limiting
+        from utils.rate_limiter import register_rate_limiting
+        register_rate_limiting(app)
+        
+        logger.info("Monitoring and error handling initialized")
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize monitoring/error handling: {e}")
+        # Continue without monitoring rather than failing
 
 def init_extensions(app: Flask) -> None:
     """Initialize Flask extensions with graceful error handling."""

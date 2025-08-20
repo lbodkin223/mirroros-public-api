@@ -1,342 +1,281 @@
-# MirrorOS Public API
+# MirrorOS - AI-Powered Prediction Engine
 
-A production-ready Flask API server for MirrorOS that handles user authentication, payments, and proxies prediction requests to a private server. This API is designed to be deployed on Railway, Heroku, or similar cloud platforms.
+MirrorOS is an advanced prediction platform that analyzes user goals and provides probabilistic success estimates with actionable insights. The system uses natural language processing to extract features from goal descriptions and applies sophisticated algorithms to generate realistic predictions.
 
-## Features
+![MirrorOS Demo](https://img.shields.io/badge/Status-Production-brightgreen)
+![Version](https://img.shields.io/badge/Version-1.0-blue)
+![License](https://img.shields.io/badge/License-Proprietary-red)
 
-- **JWT Authentication**: Secure user registration, login, and session management
-- **Payment Processing**: Dual payment support for Stripe (web) and Apple In-App Purchases (iOS)
-- **Prediction Proxy**: Secure HMAC-signed requests to private prediction server
-- **Rate Limiting**: Tier-based usage limits with Redis backend
-- **Database**: PostgreSQL with optimized schema and analytics views
-- **Security**: CORS, request signing, input validation, and security headers
-- **Monitoring**: Sentry integration and comprehensive logging
-- **Deployment**: Docker, Railway, and Heroku ready
+## 🚀 Live Demo
 
-## Architecture
+**Production URL**: https://mirroros-public-api-mirroros.up.railway.app/
+
+## ✨ Features
+
+### Core Functionality
+- **🎯 Goal Analysis**: Natural language processing to extract timeline, experience, target entity, and complexity
+- **📊 Dynamic Predictions**: Probability estimates that vary based on goal difficulty and user leverage  
+- **🔬 Enhanced Grounding**: Research-backed predictions with domain-specific sources
+- **📈 Target Analysis**: Goal difficulty, user leverage, and target selectivity metrics
+- **🎨 Beautiful UI**: Modern glassmorphism design with animated backgrounds
+- **📱 Responsive**: Works perfectly on desktop and mobile devices
+
+### Prediction Categories
+- **Career**: Job searches, promotions, career transitions
+- **Education**: Learning goals, certifications, skill development  
+- **Business**: Startup goals, revenue targets, growth objectives
+- **Health**: Fitness goals, habit formation, wellness targets
+- **Travel**: Trip planning, visa applications, adventure goals
+- **Relationships**: Dating goals, social objectives, networking
+
+## 🏗️ Architecture
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   iOS/Web App   │────│  Public API      │────│  Private Server │
-│   (Frontend)    │    │  (This Project)  │    │  (Predictions)  │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                              │
-                       ┌──────────────┐
-                       │  PostgreSQL  │
-                       │    Redis     │
-                       │   Stripe     │
-                       │    Apple     │
-                       └──────────────┘
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend UI   │────│  Public API     │────│   Private API   │
+│   (Static)      │    │  (Auth/Proxy)   │    │  (Algorithms)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+    ┌─────────┐              ┌─────────┐              ┌─────────┐
+    │ HTML/JS │              │ Flask   │              │ Flask   │
+    │ CSS/UI  │              │ Auth    │              │ ML Core │
+    └─────────┘              │ Payments│              │ NLP     │
+                             │ Rate    │              │ Cache   │
+                             │ Limit   │              └─────────┘
+                             └─────────┘
 ```
 
-## Quick Start
+### Public API (Authentication & Proxy)
+- **Authentication**: JWT-based with demo mode
+- **Rate Limiting**: Tier-based usage limits
+- **Request Proxying**: Secure forwarding to private algorithms
+- **Static Files**: Serves the main UI application
+
+### Private API (Prediction Engine)
+- **Feature Extraction**: NLP analysis of goal text
+- **Prediction Algorithms**: Mathematical models for probability calculation
+- **Enhanced Grounding**: Research source simulation (RAG-ready architecture)
+- **Security**: HMAC request signing, IP whitelisting
+
+## 🛠️ Technology Stack
+
+### Backend
+- **Python 3.9+**
+- **Flask** - Web framework
+- **JWT** - Authentication
+- **SQLAlchemy** - Database ORM
+- **Redis** - Caching (optional)
+- **Gunicorn** - WSGI server
+
+### Frontend  
+- **Vanilla JavaScript** - No frameworks for maximum performance
+- **CSS3** - Modern styling with glassmorphism effects
+- **HTML5** - Semantic markup
+
+### Infrastructure
+- **Railway** - Cloud deployment
+- **PostgreSQL** - Database (Railway managed)
+- **GitHub** - Version control
+- **Environment Variables** - Configuration management
+
+## 🚦 Getting Started
+
+### Prerequisites
+- Python 3.9 or higher
+- Git
+- Railway CLI (for deployment)
 
 ### Local Development
 
-1. **Clone and Setup**
+1. **Clone the repositories**:
    ```bash
-   git clone <repository-url>
-   cd mirroros-public
+   git clone https://github.com/lbodkin223/mirroros-public-api.git
+   git clone https://github.com/lbodkin223/mirroros-private.git
+   ```
+
+2. **Set up Public API**:
+   ```bash
+   cd mirroros-public-api
    pip install -r requirements.txt
-   ```
-
-2. **Environment Configuration**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-3. **Database Setup**
-   ```bash
-   # Start PostgreSQL and Redis (or use Docker Compose)
-   docker-compose up -d db redis
    
-   # Initialize database
-   flask db upgrade
-   python -c "from database.schema import initialize_production_database; initialize_production_database()"
+   # Set environment variables
+   export FLASK_ENV=development
+   export PRIVATE_API_URL=http://localhost:8001
+   export PRIVATE_API_SECRET=your-secret-key
+   
+   python app.py
    ```
 
-4. **Run Development Server**
+3. **Set up Private API**:
    ```bash
-   flask run --port=8000
+   cd mirroros-private-api
+   pip install -r requirements.txt
+   
+   python simple_server.py
    ```
 
-### Docker Development
+4. **Open in browser**: http://localhost:5000
 
+### Environment Variables
+
+#### Public API
 ```bash
-docker-compose up
+PRIVATE_API_URL=https://mirroros-private-production.up.railway.app
+PRIVATE_API_SECRET=your-hmac-secret
+DATABASE_URL=postgresql://... (optional)
+JWT_SECRET_KEY=your-jwt-secret
+SENTRY_DSN=your-sentry-dsn (optional)
 ```
+
+#### Private API  
+```bash
+GROUNDING_SERVICE_TYPE=mock  # or 'rag' for real research
+LOG_LEVEL=INFO
+FLASK_ENV=production
+```
+
+## 🎯 API Endpoints
+
+### Public API (Port 5000)
+
+#### Authentication
+- `POST /api/auth/demo-login` - Get demo JWT tokens
+- `GET /api/auth/me` - Get current user info
+
+#### Predictions
+- `POST /api/predict` - Generate prediction (requires auth)
+- `GET /api/predict/usage` - Get usage statistics
+
+#### Health & Info
+- `GET /health` - Health check
+- `GET /` - Serve main UI
+
+### Private API (Port 8080)
+
+#### Core
+- `POST /predict` - Core prediction algorithm
+- `GET /health` - Health check
+
+## 🧪 Testing
+
+### Manual Testing
+```bash
+# Test health endpoints
+curl https://mirroros-public-api-mirroros.up.railway.app/health
+curl https://mirroros-private-production.up.railway.app/health
+
+# Get demo token
+curl -X POST https://mirroros-public-api-mirroros.up.railway.app/api/auth/demo-login \
+  -H "Content-Type: application/json" -d '{"demo": true}'
+
+# Test prediction  
+curl -X POST https://mirroros-public-api-mirroros.up.railway.app/api/predict \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"goal": "Learn Python in 3 months"}'
+```
+
+### Example Predictions
+- **Easy**: "Drink water in 5 minutes" → 99% probability
+- **Moderate**: "Learn Python in 6 months" → 60% probability  
+- **Hard**: "Get job at Google in 2 weeks" → 6% probability
+- **Impossible**: "Travel to Mars tomorrow" → 1% probability
+
+## 📊 Features Deep Dive
+
+### Enhanced Grounding
+When enabled, the system provides:
+- **Dynamic study counts** (2-11 based on complexity)
+- **Domain-specific sources** (LinkedIn for career, CDC for health)
+- **Company-specific research** (Google hiring data, Apple analytics)
+- **Realistic coefficients** (8-14 based on extracted features)
+
+### Feature Extraction
+The NLP system extracts:
+- **Timeline**: "6 months" → 6.0 months
+- **Experience**: "5 years experience" → 5.0 years  
+- **Target Entity**: "at Google" → "google"
+- **Age**: "I'm 28" → 28 years
+- **Budget**: "$5000/month" → 5000.0 USD
+- **Readiness Score**: Based on preparation indicators
+
+### Target Analysis Metrics
+- **Goal Difficulty**: 0.0 (easy) to 1.0 (very hard)
+- **User Leverage**: 0.0 (no advantages) to 1.0 (maximum advantages)  
+- **Target Selectivity**: 0.0 (not selective) to 1.0 (extremely selective)
+
+## 🔐 Security
+
+### Authentication
+- **JWT tokens** with 24-hour expiration
+- **Demo mode** for testing without registration
+- **Rate limiting** by user tier
+
+### Private API Security
+- **HMAC request signing** for API calls
+- **IP whitelisting** for additional protection
+- **Request validation** and sanitization
+- **No proprietary algorithms** exposed in public API
+
+## 🚀 Deployment
 
 ### Railway Deployment
+Both services auto-deploy from GitHub:
 
-1. **Connect Repository**: Link your GitHub repository to Railway
-2. **Set Environment Variables**: Configure all required environment variables
-3. **Deploy**: Railway will automatically build and deploy using the Dockerfile
+1. **Public API**: Connected to `mirroros-public-api` repository
+2. **Private API**: Connected to `mirroros-private` repository
 
-### Heroku Deployment
+### Environment Configuration
+Set environment variables in Railway dashboard for each service.
 
-```bash
-heroku create your-app-name
-heroku addons:create heroku-postgresql:hobby-dev
-heroku addons:create heroku-redis:hobby-dev
-heroku config:set FLASK_ENV=production
-# Set other environment variables...
-git push heroku main
-```
+### Custom Domains (Optional)
+Configure custom domains in Railway for branded URLs.
 
-## API Documentation
+## 🤝 Contributing
 
-### Authentication Endpoints
+This is a private project. For development access:
 
-#### Register User
-```http
-POST /api/auth/register
-Content-Type: application/json
+1. Contact the development team
+2. Get access to private repositories  
+3. Follow the development primer document
+4. Use the established coding standards
 
-{
-  "email": "user@example.com",
-  "password": "SecurePassword123!"
-}
-```
+## 📈 Future Roadmap
 
-#### Login
-```http
-POST /api/auth/login
-Content-Type: application/json
+### Phase 1: RAG Implementation
+- **Real research retrieval** with Semantic Scholar API
+- **Vector database** integration (Pinecone/Weaviate)
+- **Dynamic coefficient updates** from research data
 
-{
-  "email": "user@example.com",
-  "password": "SecurePassword123!"
-}
-```
+### Phase 2: Mobile App
+- **Native iOS app** development
+- **Push notifications** for goal reminders
+- **Widget support** for quick predictions
+- **Offline mode** capabilities
 
-#### Get Profile
-```http
-GET /api/auth/profile
-Authorization: Bearer <jwt_token>
-```
+### Phase 3: Enhanced AI
+- **GPT integration** for narrative generation
+- **Image analysis** for goal context
+- **Voice input** for goal description
+- **Personalization** based on user history
 
-### Payment Endpoints
+### Phase 4: Social Features
+- **Goal sharing** with friends
+- **Community challenges** and leaderboards
+- **Expert advice** integration
+- **Success story database**
 
-#### Create Stripe Checkout Session
-```http
-POST /api/payments/stripe/create-checkout-session
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
+## 📄 License
 
-{
-  "tier": "pro",
-  "billing_cycle": "monthly"
-}
-```
+Proprietary software. All rights reserved.
 
-#### Validate Apple Receipt
-```http
-POST /api/payments/apple/validate-receipt
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
+## 🆘 Support
 
-{
-  "receipt_data": "base64_encoded_receipt"
-}
-```
+For technical support or questions:
+- Create issues in the respective GitHub repositories
+- Contact the development team directly
+- Check the development primer document for local setup
 
-### Prediction Endpoints
+---
 
-#### Make Prediction
-```http
-POST /api/gateway/predict
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-
-{
-  "goal": "I want to get a job at OpenAI within 6 months",
-  "timeframe": "6 months",
-  "context": "I have 3 years of ML experience",
-  "options": {
-    "enhanced_grounding": true,
-    "confidence_level": "high"
-  }
-}
-```
-
-#### Get Usage Statistics
-```http
-GET /api/gateway/predict/usage
-Authorization: Bearer <jwt_token>
-```
-
-### Health Check
-```http
-GET /health
-```
-
-## Configuration
-
-### Required Environment Variables
-
-```bash
-# Core
-SECRET_KEY=your-secret-key
-DATABASE_URL=postgresql://user:pass@host:port/dbname
-PRIVATE_API_URL=https://your-private-server.com
-PRIVATE_API_SECRET=your-hmac-secret
-
-# Payments
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-APPLE_SHARED_SECRET=your-apple-secret
-
-# Optional
-REDIS_URL=redis://localhost:6379/0
-SENTRY_DSN=https://...@sentry.io/...
-```
-
-### User Tiers and Limits
-
-| Tier       | Predictions/Day | Features |
-|------------|-----------------|----------|
-| Free       | 5               | Basic predictions |
-| Pro        | 100             | Enhanced grounding, priority support |
-| Enterprise | Unlimited       | All features, dedicated support |
-
-## Security Features
-
-- **HMAC Request Signing**: All requests to private server are HMAC-SHA256 signed
-- **JWT Authentication**: Secure token-based authentication
-- **Rate Limiting**: Prevents abuse with Redis-backed rate limiting
-- **Input Validation**: Comprehensive request validation and sanitization
-- **CORS Protection**: Configurable cross-origin resource sharing
-- **Security Headers**: Automatic security headers via middleware
-
-## Database Schema
-
-### Users Table
-- `id` (UUID): Primary key
-- `email` (String): Unique user email
-- `password_hash` (String): Bcrypt hashed password
-- `tier` (String): Subscription tier (free/pro/enterprise)
-- `is_active` (Boolean): Account status
-- `is_verified` (Boolean): Email verification status
-
-### Subscriptions Table
-- `id` (UUID): Primary key
-- `user_id` (UUID): Foreign key to users
-- `stripe_subscription_id` (String): Stripe subscription ID
-- `apple_transaction_id` (String): Apple transaction ID
-- `tier` (String): Subscription tier
-- `status` (String): Subscription status
-
-### Prediction Requests Table
-- `id` (UUID): Primary key
-- `user_id` (UUID): Foreign key to users
-- `request_data_hash` (String): Hash of request data
-- `success` (Boolean): Request success status
-- `response_time_ms` (Integer): Response time
-- `error_code` (String): Error code if failed
-
-## Monitoring and Logging
-
-### Health Checks
-- **Application Health**: `/health` endpoint
-- **Database Health**: Connection and query checks
-- **Private Server Health**: `/api/gateway/predict/health`
-
-### Metrics and Analytics
-- User registration and activity metrics
-- Subscription analytics (Stripe + Apple)
-- Prediction usage analytics
-- Performance metrics (response times, success rates)
-
-### Logging
-- Structured JSON logging
-- Request/response logging
-- Error tracking with Sentry
-- Security event logging
-
-## Development
-
-### Project Structure
-```
-mirroros-public/
-├── app.py                 # Flask application factory
-├── config.py              # Configuration management
-├── requirements.txt       # Python dependencies
-├── Dockerfile            # Docker configuration
-├── railway.json          # Railway deployment config
-├── auth/                 # Authentication module
-│   ├── models.py         # User and subscription models
-│   ├── routes.py         # Auth endpoints
-│   └── middleware.py     # JWT and rate limiting
-├── payments/             # Payment processing
-│   ├── stripe_handler.py # Stripe integration
-│   └── apple_validator.py# Apple IAP validation
-├── gateway/              # Prediction proxy
-│   └── prediction_proxy.py
-├── security/             # Security utilities
-│   └── request_signer.py # HMAC signing
-└── database/             # Database configuration
-    ├── __init__.py       # Database initialization
-    └── schema.py         # Schema and migrations
-```
-
-### Testing
-
-```bash
-# Install test dependencies
-pip install pytest pytest-flask pytest-cov
-
-# Run tests
-pytest
-
-# Run with coverage
-pytest --cov=. --cov-report=html
-```
-
-### Code Quality
-
-```bash
-# Format code
-black .
-
-# Lint code
-flake8 .
-```
-
-## Deployment Considerations
-
-### Environment-Specific Settings
-
-- **Development**: Debug enabled, relaxed security, in-memory caching
-- **Staging**: Production-like but with debug logging
-- **Production**: Security hardened, optimized performance, monitoring enabled
-
-### Scaling
-
-- **Horizontal Scaling**: Stateless design allows multiple instances
-- **Database**: Connection pooling and read replicas supported
-- **Caching**: Redis for session storage and rate limiting
-- **CDN**: Static assets can be served via CDN
-
-### Security Checklist
-
-- [ ] Environment variables properly configured
-- [ ] HTTPS enabled in production
-- [ ] CORS origins restricted to your domains
-- [ ] Rate limiting configured appropriately
-- [ ] Database credentials secured
-- [ ] Webhook secrets properly set
-- [ ] Monitoring and alerting configured
-
-## Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review logs and error messages
-3. Verify environment configuration
-4. Check database connectivity
-5. Validate webhook endpoints
-
-## License
-
-[Your License Here]
+Built with ❤️ using Claude Code

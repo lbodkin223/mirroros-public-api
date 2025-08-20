@@ -33,44 +33,7 @@ def get_current_user() -> Optional[User]:
         if not user_id:
             return None
         
-        # Handle demo user fallback case
-        if user_id == 'demo-user-12345':
-            # Create a mock user object for demo purposes
-            from .models import User
-            from datetime import datetime, timezone
-            
-            class DemoUser:
-                def __init__(self):
-                    self.id = user_id
-                    self.email = 'demo@mirroros.com'
-                    self.full_name = 'Demo User'
-                    self.tier = 'free'
-                    self.is_verified = True
-                    self.is_active = True
-                    self.predictions_used_today = 0
-                    self.last_reset_date = datetime.now(timezone.utc).date()
-                    self.created_at = datetime.now(timezone.utc)
-                    self.updated_at = datetime.now(timezone.utc)
-                    self.last_login_at = datetime.now(timezone.utc)
-                
-                def increment_prediction_usage(self) -> None:
-                    """Mock increment for demo user."""
-                    self.predictions_used_today += 1
-                
-                def can_make_prediction(self) -> bool:
-                    """Mock check for demo user - always allow."""
-                    return True
-                
-                def get_tier_limits(self):
-                    """Mock tier limits for demo user."""
-                    return {
-                        'predictions_per_day': 10,
-                        'max_requests_per_hour': 20
-                    }
-            
-            demo_user = DemoUser()
-            g.current_user = demo_user
-            return demo_user
+        # Production mode - no demo user fallback
         
         # Fetch and cache user
         user = User.query.filter_by(id=user_id, is_active=True).first()

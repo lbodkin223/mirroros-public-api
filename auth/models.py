@@ -314,3 +314,165 @@ class PredictionRequest(db.Model):
     
     def __repr__(self) -> str:
         return f'<PredictionRequest {self.id} - {"success" if self.success else "failed"}>'
+
+
+class Whitelist(db.Model):
+    """
+    Whitelist model for email-based access control.
+    
+    Attributes:
+        id: Unique whitelist entry identifier
+        email: Email address to whitelist
+        invite_code: Optional invite code for registration
+        invited_by: User who created this whitelist entry
+        notes: Optional notes about the whitelist entry
+        is_used: Whether this whitelist entry has been used
+        used_at: When this entry was used
+        used_by: User who used this whitelist entry
+        created_at: Entry creation timestamp
+        expires_at: Optional expiration timestamp
+    """
+    
+    __tablename__ = 'whitelist'
+    
+    # Primary key
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # Email to whitelist
+    email = db.Column(db.String(255), unique=True, nullable=False, index=True)
+    
+    # Optional invite code
+    invite_code = db.Column(db.String(50), unique=True, nullable=True, index=True)
+    
+    # Who invited this email
+    invited_by = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), nullable=True)
+    
+    # Optional notes
+    notes = db.Column(db.Text, nullable=True)
+    
+    # Status tracking
+    is_used = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    used_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    used_by = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), nullable=True)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=True, index=True)
+    
+    # Relationships
+    inviter = db.relationship('User', foreign_keys=[invited_by], backref='sent_invites')
+    user_who_used = db.relationship('User', foreign_keys=[used_by], backref='used_invites')
+    
+    def __init__(self, email: str, invite_code: Optional[str] = None, 
+                 invited_by: Optional[uuid.UUID] = None, notes: Optional[str] = None,
+                 expires_at: Optional[datetime] = None):
+        """
+        Initialize a new whitelist entry.
+        
+        Args:
+            email: Email address to whitelist
+            invite_code: Optional invite code
+            invited_by: User who created this entry
+            notes: Optional notes
+            expires_at: Optional expiration date
+        """
+        self.email = email.lower().strip()
+        self.invite_code = invite_code
+        self.invited_by = invited_by
+        self.notes = notes.strip() if notes else None
+        self.expires_at = expires_at
+    
+    def is_valid(self) -> bool:
+        """
+        Check if this whitelist entry is valid (not used and not expired).
+        
+        Returns:
+            True if valid, False otherwise
+        """
+        # Check if already used
+        if self.is_used:
+            return False
+        
+        # Check if expired
+        if self.expires_at and datetime.now(timezone.utc) > self.expires_at:
+            return False
+        
+        return True
+    
+    def mark_as_used(self, user_id: uuid.UUID) -> None:
+        """
+        Mark this whitelist entry as used.
+        
+        Args:
+            user_id: ID of the user who used this entry
+        """
+        self.is_used = True
+        self.used_at = datetime.now(timezone.utc)
+        self.used_by = user_id
+        db.session.commit()
+    
+    @classmethod
+    def is_email_whitelisted(cls, email: str) -> bool:
+        """
+        Check if an email address is whitelisted and valid.
+        
+        Args:
+            email: Email address to check
+            
+        Returns:
+            True if email is whitelisted and valid, False otherwise
+        """
+        entry = cls.query.filter_by(email=email.lower().strip()).first()
+        return entry is not None and entry.is_valid()
+    
+    @classmethod
+    def use_whitelist_entry(cls, email: str, user_id: uuid.UUID) -> bool:
+        """
+        Use a whitelist entry for an email address.
+        
+        Args:
+            email: Email address
+            user_id: ID of the user using the entry
+            
+        Returns:
+            True if entry was found and used, False otherwise
+        """
+        entry = cls.query.filter_by(email=email.lower().strip()).first()
+        if entry and entry.is_valid():
+            entry.mark_as_used(user_id)
+            return True
+        return False
+    
+    def to_dict(self, include_sensitive: bool = False) -> Dict[str, Any]:
+        """
+        Convert whitelist entry to dictionary for JSON serialization.
+        
+        Args:
+            include_sensitive: Whether to include sensitive fields like invite codes
+            
+        Returns:
+            Dictionary representation of the whitelist entry
+        """
+        data = {
+            'id': str(self.id),
+            'email': self.email,
+            'is_used': self.is_used,
+            'used_at': self.used_at.isoformat() if self.used_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'is_valid': self.is_valid(),
+        }
+        
+        if include_sensitive:
+            data.update({
+                'invite_code': self.invite_code,
+                'notes': self.notes,
+                'invited_by': str(self.invited_by) if self.invited_by else None,
+                'used_by': str(self.used_by) if self.used_by else None,
+            })
+        
+        return data
+    
+    def __repr__(self) -> str:
+        status = "used" if self.is_used else "valid" if self.is_valid() else "expired"
+        return f'<Whitelist {self.email} ({status})>'
