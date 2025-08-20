@@ -551,5 +551,34 @@ def get_usage():
             'message': 'Failed to fetch usage statistics'
         }), 500
 
-# Demo login endpoint removed for production
-# Use /register and /login endpoints for authentication
+@auth_bp.route('/demo-login', methods=['POST'])
+def demo_login():
+    """
+    Demo login endpoint for testing without database constraints.
+    Returns a JWT token for testing purposes.
+    """
+    try:
+        # Create a demo JWT token
+        demo_user_id = "demo-user-123"
+        access_token = create_access_token(
+            identity=demo_user_id,
+            expires_delta=timedelta(hours=24)
+        )
+        
+        logger.info("Demo login successful")
+        return jsonify({
+            'access_token': access_token,
+            'user': {
+                'id': demo_user_id,
+                'email': 'demo@mirroros.com',
+                'name': 'Demo User',
+                'tier': 'free'
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Demo login error: {str(e)}")
+        return jsonify({
+            'error': 'demo_login_failed',
+            'message': 'Demo login failed'
+        }), 500
