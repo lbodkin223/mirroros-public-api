@@ -33,9 +33,19 @@ def get_current_user() -> Optional[User]:
         if not user_id:
             return None
         
-        # Production mode - no demo user fallback
+        # Handle demo user
+        if user_id == "demo-user-123":
+            from types import SimpleNamespace
+            demo_user = SimpleNamespace()
+            demo_user.id = "demo-user-123"
+            demo_user.email = "demo@mirroros.com"
+            demo_user.full_name = "Demo User"
+            demo_user.tier = "free"
+            demo_user.is_active = True
+            g.current_user = demo_user
+            return demo_user
         
-        # Fetch and cache user
+        # Fetch and cache real user
         user = User.query.filter_by(id=user_id, is_active=True).first()
         g.current_user = user
         
