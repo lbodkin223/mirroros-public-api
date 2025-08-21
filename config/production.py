@@ -184,7 +184,7 @@ class StagingConfig(ProductionConfig):
     # Override CORS for staging
     CORS_ORIGINS = [
         'https://staging.mirroros.com',
-        'https://mirroros-staging.up.railway.app',
+        'https://mirroros-staging.aws.mirroros.com',
         'http://localhost:3000',  # For local frontend development
         'http://localhost:5000'   # For local backend development
     ]
