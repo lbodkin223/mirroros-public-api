@@ -1536,7 +1536,7 @@
             }
         }
 
-        // Generate narrative using real API chain of thought data
+        // Generate narrative using real API chain of thought data and user's specific goal
         function generateRealNarrative(result) {
             if (!result || !result.chain_of_thought) {
                 return "No detailed analysis available. Please run a prediction to generate a narrative.";
@@ -1547,49 +1547,100 @@
             const factors = result.key_success_factors || [];
             const risks = result.risk_factors || [];
             
-            // Start with methodology and confidence
-            let narrative = `**Analysis Methodology**: ${chainOfThought.methodology}\n\n`;
+            // Get the original goal from the input
+            const goalText = document.getElementById('goal-input').value || 'your goal';
+            const timeframe = document.getElementById('timeframe').value || 'the planned timeframe';
+            const context = document.getElementById('context').value || '';
             
-            // Add reasoning steps as story elements
-            if (chainOfThought.reasoning_steps && chainOfThought.reasoning_steps.length > 0) {
-                narrative += "**Detailed Assessment**:\n\n";
-                
-                chainOfThought.reasoning_steps.forEach((step, index) => {
-                    // Clean up the step text and make it more narrative
-                    const cleanStep = step
-                        .replace(/🎯|⏰|📈|🏢|✅|⚠️|🎯/g, '') // Remove emojis
-                        .replace(/\*\*/g, '') // Remove markdown bold
-                        .trim();
-                    
-                    narrative += `${cleanStep} `;
-                });
-                
-                narrative += "\n\n";
+            // Extract key parts from the goal
+            const goalMatch = goalText.match(/I want to (.+?)(?:\s+within|\s+in|\.|$)/i);
+            const cleanGoal = goalMatch ? goalMatch[1].trim() : goalText;
+            
+            // Start with personalized opening
+            let narrative = `**Your Goal**: ${cleanGoal}\n\n`;
+            
+            // Personalized probability assessment
+            narrative += `**Success Probability Analysis**: In order for you to ${cleanGoal.toLowerCase()}, our analysis shows a ${Math.round(probability * 100)}% probability of success`;
+            
+            if (timeframe && timeframe !== 'the planned timeframe') {
+                narrative += ` within ${timeframe}`;
             }
+            narrative += '.\n\n';
             
-            // Add success factors
+            // Specific factors that will help
             if (factors.length > 0) {
-                narrative += `**Key Advantages Working in Your Favor**: ${factors.join(', ')}\n\n`;
+                narrative += `**What's Working in Your Favor**: `;
+                if (factors.length === 1) {
+                    narrative += `Your ${factors[0].toLowerCase()} will be crucial for achieving ${cleanGoal.toLowerCase()}. This gives you a solid foundation to build upon.\n\n`;
+                } else {
+                    narrative += `You have ${factors.length} key advantages: ${factors.map(f => f.toLowerCase()).join(', ')}. These factors significantly improve your chances of ${cleanGoal.toLowerCase()}.\n\n`;
+                }
             }
             
-            // Add risk factors
+            // Specific challenges and what needs to change
             if (risks.length > 0) {
-                narrative += `**Primary Challenges to Navigate**: ${risks.join(', ')}\n\n`;
+                narrative += `**Critical Factors You Need to Address**: `;
+                if (risks.length === 1) {
+                    narrative += `The main challenge is that ${risks[0].toLowerCase()}. To ${cleanGoal.toLowerCase()}, you'll need to specifically address this constraint`;
+                } else {
+                    narrative += `There are ${risks.length} key challenges: ${risks.slice(0, -1).map(r => r.toLowerCase()).join(', ')} and ${risks[risks.length - 1].toLowerCase()}. Each of these factors will impact your ability to ${cleanGoal.toLowerCase()}`;
+                }
+                
+                if (timeframe && timeframe !== 'the planned timeframe') {
+                    narrative += ` within ${timeframe}`;
+                }
+                narrative += '.\n\n';
             }
             
-            // Add final assessment based on probability
-            narrative += "**Final Assessment**: ";
+            // Actionable recommendations based on probability
+            narrative += "**Strategic Recommendations**: ";
             if (probability > 0.7) {
-                narrative += `With a ${Math.round(probability * 100)}% success probability, your path forward looks promising. The analysis indicates strong alignment between your circumstances and your objective.`;
+                narrative += `Your ${Math.round(probability * 100)}% success probability indicates you're well-positioned to ${cleanGoal.toLowerCase()}. `;
+                if (factors.length > 0) {
+                    narrative += `Focus on leveraging your ${factors[0].toLowerCase()} while `;
+                }
+                if (risks.length > 0) {
+                    narrative += `addressing the ${risks[0].toLowerCase()} to ensure success.`;
+                } else {
+                    narrative += `maintaining your current trajectory.`;
+                }
             } else if (probability > 0.4) {
-                narrative += `At ${Math.round(probability * 100)}% success probability, you're in a balanced position with both opportunities and obstacles. Strategic planning will be key to improving your odds.`;
+                narrative += `At ${Math.round(probability * 100)}% probability, ${cleanGoal.toLowerCase()} is achievable but requires strategic action. `;
+                if (risks.length > 0) {
+                    narrative += `Prioritize solving the ${risks[0].toLowerCase()} issue, as this is your biggest obstacle. `;
+                }
+                if (factors.length > 0) {
+                    narrative += `Simultaneously, double down on your ${factors[0].toLowerCase()} to maximize your advantages.`;
+                }
             } else {
-                narrative += `The ${Math.round(probability * 100)}% success probability reflects significant challenges ahead. While difficult, many have overcome similar odds through persistence and strategic adaptation.`;
+                narrative += `The ${Math.round(probability * 100)}% probability means ${cleanGoal.toLowerCase()} will be challenging but not impossible. `;
+                if (risks.length > 0) {
+                    narrative += `Your primary focus should be overcoming ${risks[0].toLowerCase()}. `;
+                    if (risks.length > 1) {
+                        narrative += `Additionally, address ${risks[1].toLowerCase()} to improve your odds. `;
+                    }
+                }
+                if (factors.length > 0) {
+                    narrative += `Your ${factors[0].toLowerCase()} is your strongest asset - use it as your foundation for progress.`;
+                }
+                if (timeframe && timeframe !== 'the planned timeframe') {
+                    narrative += ` Consider extending your ${timeframe} timeline to allow for more thorough preparation.`;
+                }
+            }
+            
+            // Add context-specific insights if provided
+            if (context) {
+                narrative += `\n\n**Given Your Context**: Considering ${context.toLowerCase()}, `;
+                if (probability > 0.5) {
+                    narrative += `this additional context strengthens your position for ${cleanGoal.toLowerCase()}.`;
+                } else {
+                    narrative += `factor this into your strategy for ${cleanGoal.toLowerCase()}.`;
+                }
             }
             
             // Add confidence level
             if (chainOfThought.confidence_level) {
-                narrative += ` This assessment carries ${chainOfThought.confidence_level.toLowerCase()} confidence based on the available data.`;
+                narrative += `\n\n**Assessment Confidence**: This analysis carries ${chainOfThought.confidence_level.toLowerCase()} confidence based on the specific details of your goal to ${cleanGoal.toLowerCase()}.`;
             }
             
             return narrative;
