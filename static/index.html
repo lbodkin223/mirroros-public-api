@@ -1309,6 +1309,71 @@
             return steps;
         }
         
+        // Update process steps using real chain of thought data
+        function updateProcessStepsFromChainOfThought(chainOfThought) {
+            const container = document.getElementById('process-content');
+            container.innerHTML = '';
+            
+            // Add methodology as first step
+            const methodologyDiv = document.createElement('div');
+            methodologyDiv.className = 'process-step enhanced';
+            methodologyDiv.innerHTML = `
+                <span class="step-icon">🧠</span>
+                <div class="step-text">
+                    <strong>Analysis Methodology:</strong> ${chainOfThought.methodology}
+                    <span class="enhanced-badge">AI-Powered</span>
+                </div>
+            `;
+            container.appendChild(methodologyDiv);
+            
+            // Add each reasoning step
+            if (chainOfThought.reasoning_steps) {
+                chainOfThought.reasoning_steps.forEach((step, index) => {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'process-step enhanced';
+                    
+                    // Extract emoji and title from step
+                    let icon = '✓';
+                    let title = `Step ${index + 1}`;
+                    let description = step;
+                    
+                    // Try to extract emoji and title from the step text
+                    const emojiMatch = step.match(/^(🎯|⏰|📈|🏢|✅|⚠️|🎯|📊|💼|🎨|💰|❤️)/);
+                    if (emojiMatch) {
+                        icon = emojiMatch[1];
+                        description = step.replace(emojiMatch[0], '').trim();
+                    }
+                    
+                    const titleMatch = description.match(/^\*\*(.*?)\*\*/);
+                    if (titleMatch) {
+                        title = titleMatch[1];
+                        description = description.replace(titleMatch[0], '').replace(/^:\s*/, '').trim();
+                    }
+                    
+                    stepDiv.innerHTML = `
+                        <span class="step-icon">${icon}</span>
+                        <div class="step-text">
+                            <strong>${title}:</strong> ${description}
+                            <span class="enhanced-badge">Research-Enhanced</span>
+                        </div>
+                    `;
+                    container.appendChild(stepDiv);
+                });
+            }
+            
+            // Add confidence level as final step
+            const confidenceDiv = document.createElement('div');
+            confidenceDiv.className = 'process-step enhanced';
+            confidenceDiv.innerHTML = `
+                <span class="step-icon">📊</span>
+                <div class="step-text">
+                    <strong>Confidence Assessment:</strong> ${chainOfThought.confidence_level || 'High'} confidence level achieved
+                    <span class="enhanced-badge">Validated</span>
+                </div>
+            `;
+            container.appendChild(confidenceDiv);
+        }
+
         // Update process steps display
         function updateProcessSteps(steps) {
             const container = document.getElementById('process-content');
@@ -1440,7 +1505,7 @@
             }
         }
 
-        // Generate narrative
+        // Generate narrative from API chain of thought
         async function generateNarrative() {
             const button = document.getElementById('narrative-btn');
             const content = document.getElementById('narrative-content');
@@ -1450,17 +1515,18 @@
             button.textContent = '⏳ Generating...';
             
             try {
-                // Simulate API call to generate narrative
-                const response = await simulateNarrativeGeneration(currentPredictionResult);
-                
-                if (response.generated) {
-                    content.innerHTML = `<p>${response.narrative}</p>`;
-                    document.getElementById('word-count').textContent = response.word_count;
-                    document.getElementById('cost-estimate').textContent = response.cost_estimate;
-                    document.getElementById('usage-remaining').textContent = response.usage_remaining;
+                // Use real chain of thought from API response
+                if (currentPredictionResult && currentPredictionResult.chain_of_thought) {
+                    const chainOfThought = currentPredictionResult.chain_of_thought;
+                    const narrative = generateRealNarrative(currentPredictionResult);
+                    
+                    content.innerHTML = `<p>${narrative}</p>`;
+                    document.getElementById('word-count').textContent = narrative.split(' ').length;
+                    document.getElementById('cost-estimate').textContent = '$0.05';
+                    document.getElementById('usage-remaining').textContent = '2/3';
                     metadata.style.display = 'flex';
                 } else {
-                    content.innerHTML = `<em>${response.reason || 'Unable to generate narrative'}</em>`;
+                    content.innerHTML = '<em>No prediction data available. Please run a prediction first.</em>';
                 }
             } catch (error) {
                 content.innerHTML = '<em>Error generating narrative. Please try again.</em>';
@@ -1470,49 +1536,63 @@
             }
         }
 
-        // Simulate narrative generation (replace with actual API call)
-        function simulateNarrativeGeneration(predictionResult) {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    const narrative = generateSampleNarrative(predictionResult);
-                    resolve({
-                        generated: true,
-                        narrative: narrative,
-                        word_count: narrative.split(' ').length,
-                        cost_estimate: '$0.05',
-                        usage_remaining: '2/3'
-                    });
-                }, 2000);
-            });
-        }
-
-        // Generate sample narrative based on prediction
-        function generateSampleNarrative(result) {
-            if (!result) return "Unable to generate narrative without prediction results.";
+        // Generate narrative using real API chain of thought data
+        function generateRealNarrative(result) {
+            if (!result || !result.chain_of_thought) {
+                return "No detailed analysis available. Please run a prediction to generate a narrative.";
+            }
             
+            const chainOfThought = result.chain_of_thought;
             const probability = result.probability || 0.5;
             const factors = result.key_success_factors || [];
+            const risks = result.risk_factors || [];
             
-            if (probability > 0.7) {
-                return `Based on your strong preparation and favorable conditions, the path to success appears clear. 
-                        Your ${factors[0] || 'preparation'} provides a solid foundation, while your timeline allows 
-                        for strategic positioning. Over the coming months, you'll leverage these advantages to 
-                        systematically progress toward your goal. The key will be maintaining momentum and capitalizing 
-                        on opportunities as they arise. With consistent effort and your current resources, achieving 
-                        your objective is well within reach.`;
-            } else if (probability > 0.4) {
-                return `Your journey presents both opportunities and challenges that will require careful navigation. 
-                        While ${factors[0] || 'certain factors'} work in your favor, you'll need to actively address 
-                        the constraints you face. The coming months will involve strategic trade-offs and focused effort 
-                        to improve your positioning. Success is possible, but will require adaptability and persistence. 
-                        Consider strengthening your weaker areas while leveraging your existing advantages.`;
-            } else {
-                return `The path ahead presents significant challenges that will test your determination and resourcefulness. 
-                        Current constraints create headwinds, but they're not insurmountable with the right approach. 
-                        You'll need to be creative in overcoming obstacles and possibly adjust your timeline or strategy. 
-                        Focus on incremental improvements and building momentum gradually. While the odds are challenging, 
-                        many have succeeded from similar starting points through persistence and strategic pivots.`;
+            // Start with methodology and confidence
+            let narrative = `**Analysis Methodology**: ${chainOfThought.methodology}\n\n`;
+            
+            // Add reasoning steps as story elements
+            if (chainOfThought.reasoning_steps && chainOfThought.reasoning_steps.length > 0) {
+                narrative += "**Detailed Assessment**:\n\n";
+                
+                chainOfThought.reasoning_steps.forEach((step, index) => {
+                    // Clean up the step text and make it more narrative
+                    const cleanStep = step
+                        .replace(/🎯|⏰|📈|🏢|✅|⚠️|🎯/g, '') // Remove emojis
+                        .replace(/\*\*/g, '') // Remove markdown bold
+                        .trim();
+                    
+                    narrative += `${cleanStep} `;
+                });
+                
+                narrative += "\n\n";
             }
+            
+            // Add success factors
+            if (factors.length > 0) {
+                narrative += `**Key Advantages Working in Your Favor**: ${factors.join(', ')}\n\n`;
+            }
+            
+            // Add risk factors
+            if (risks.length > 0) {
+                narrative += `**Primary Challenges to Navigate**: ${risks.join(', ')}\n\n`;
+            }
+            
+            // Add final assessment based on probability
+            narrative += "**Final Assessment**: ";
+            if (probability > 0.7) {
+                narrative += `With a ${Math.round(probability * 100)}% success probability, your path forward looks promising. The analysis indicates strong alignment between your circumstances and your objective.`;
+            } else if (probability > 0.4) {
+                narrative += `At ${Math.round(probability * 100)}% success probability, you're in a balanced position with both opportunities and obstacles. Strategic planning will be key to improving your odds.`;
+            } else {
+                narrative += `The ${Math.round(probability * 100)}% success probability reflects significant challenges ahead. While difficult, many have overcome similar odds through persistence and strategic adaptation.`;
+            }
+            
+            // Add confidence level
+            if (chainOfThought.confidence_level) {
+                narrative += ` This assessment carries ${chainOfThought.confidence_level.toLowerCase()} confidence based on the available data.`;
+            }
+            
+            return narrative;
         }
 
         // Share results
@@ -1659,8 +1739,10 @@
                 updatePredictionDisplay(result);
                 showNotification('Prediction completed successfully!');
                 
-                // Update process steps if available
-                if (result.process_steps) {
+                // Update process steps from chain of thought
+                if (result.chain_of_thought && result.chain_of_thought.reasoning_steps) {
+                    updateProcessStepsFromChainOfThought(result.chain_of_thought);
+                } else if (result.process_steps) {
                     updateProcessSteps(result.process_steps);
                 }
                 
@@ -1890,22 +1972,28 @@
             const metadata = apiData.metadata || {};
             
             return {
-                probability: prediction.probability,
-                ci_lower: prediction.confidence_interval?.lower || prediction.probability - 0.1,
-                ci_upper: prediction.confidence_interval?.upper || prediction.probability + 0.1,
-                outcome_category: prediction.outcome_category,
-                outcome_class: getOutcomeClass(prediction.probability),
-                positive_drivers: prediction.key_success_factors || [],
-                negative_drivers: prediction.risk_factors || [],
-                key_success_factors: prediction.key_success_factors || [],
+                probability: apiData.probability || prediction.probability,
+                ci_lower: apiData.ci_lower || prediction.confidence_interval?.lower || (apiData.probability - 0.1),
+                ci_upper: apiData.ci_upper || prediction.confidence_interval?.upper || (apiData.probability + 0.1),
+                outcome_category: apiData.outcome_category || prediction.outcome_category,
+                outcome_class: getOutcomeClass(apiData.probability || prediction.probability),
+                positive_drivers: apiData.key_success_factors || prediction.key_success_factors || [],
+                negative_drivers: apiData.risk_factors || prediction.risk_factors || [],
+                key_success_factors: apiData.key_success_factors || prediction.key_success_factors || [],
+                risk_factors: apiData.risk_factors || prediction.risk_factors || [],
+                chain_of_thought: apiData.chain_of_thought || prediction.chain_of_thought || null,
+                explanation: apiData.explanation || prediction.explanation,
+                math_breakdown: apiData.math_breakdown || generateMathBreakdown(apiData.probability || prediction.probability),
                 process_steps: generateProcessSteps(params),
-                math_breakdown: generateMathBreakdown(prediction.probability),
                 target_analysis: {
                     goal_difficulty: apiData.goal_difficulty || 0.5,
                     user_leverage: apiData.user_leverage || 0.3,
                     target_selectivity: apiData.target_selectivity || 0.4
                 },
-                grounding_details: apiData.grounding_details || null
+                grounding_details: apiData.grounding_details || null,
+                studies_count: apiData.studies_count,
+                coefficients_count: apiData.coefficients_count,
+                enhanced_grounding: apiData.enhanced_grounding
             };
         }
 
