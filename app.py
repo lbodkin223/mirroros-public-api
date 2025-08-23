@@ -2,7 +2,7 @@
 """
 MirrorOS Public API Gateway
 Production-ready Flask application for user management, payments, and prediction proxying.
-Deployed to Railway/Heroku - contains NO proprietary algorithms.
+Deployed to AWS ECS - contains NO proprietary algorithms.
 """
 
 import os

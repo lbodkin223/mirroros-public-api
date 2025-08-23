@@ -1,0 +1,27 @@
+{
+  "serviceName": "mirroros-public-api-service",
+  "cluster": "mirroros-cluster",
+  "taskDefinition": "mirroros-public-api:1",
+  "desiredCount": 1,
+  "launchType": "FARGATE",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": [
+        "subnet-00ffaf6de8b6749ea",
+        "subnet-0cd8289b175e0f84c"
+      ],
+      "securityGroups": [
+        "sg-0544cb905bb7b1739"
+      ],
+      "assignPublicIp": "ENABLED"
+    }
+  },
+  "loadBalancers": [
+    {
+      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:423636639115:targetgroup/mirroros-public-ip-tg/263b4a5d33237d3b",
+      "containerName": "mirroros-public-api",
+      "containerPort": 8000
+    }
+  ],
+  "healthCheckGracePeriodSeconds": 60
+}

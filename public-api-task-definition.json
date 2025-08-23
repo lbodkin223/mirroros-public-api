@@ -1,0 +1,67 @@
+{
+  "family": "mirroros-public-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::423636639115:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::423636639115:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "mirroros-public-api",
+      "image": "423636639115.dkr.ecr.us-east-1.amazonaws.com/mirroros-public-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "DATABASE_URL",
+          "value": "postgresql://postgres:MirrorOS2025Prod@mirroros-prod-db.cw56mwu0gbw6.us-east-1.rds.amazonaws.com:5432/postgres"
+        },
+        {
+          "name": "FLASK_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "8000"
+        },
+        {
+          "name": "PRIVATE_API_URL",
+          "value": "http://localhost:8080"
+        },
+        {
+          "name": "JWT_SECRET_KEY",
+          "value": "jwt-secret-key-production-mirroros-2025"
+        },
+        {
+          "name": "SECRET_KEY",
+          "value": "mirroros-secret-key-production-2025"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/mirroros-public-api",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:8000/api/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}

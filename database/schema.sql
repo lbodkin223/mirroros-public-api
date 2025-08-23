@@ -230,8 +230,8 @@ CREATE POLICY user_sessions_own_data ON user_sessions
 CREATE POLICY whitelist_admin_access ON whitelist
     FOR ALL USING (current_setting('app.current_user_role', true) = 'admin');
 
--- Create application user for Railway/production
--- DO NOT run this in production - use Railway's database user
+-- Create application user for AWS RDS production
+-- DO NOT run this in production - use AWS RDS database user
 -- CREATE USER mirroros_app WITH PASSWORD 'secure_password_here';
 -- GRANT CONNECT ON DATABASE mirroros_production TO mirroros_app;
 -- GRANT USAGE ON SCHEMA public TO mirroros_app;
