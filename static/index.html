@@ -945,7 +945,7 @@
             <h1 class="logo">MirrorOS</h1>
             <p class="tagline">Advanced AI-Powered Prediction Engine</p>
             <div class="header-status">
-                <span class="beta-badge">ALPHA v0.4.1</span>
+                <span class="beta-badge">ALPHA v0.4.2 - Fixed Narratives</span>
                 <div class="user-status">
                     <span class="tier-badge" id="user-tier">FREE</span>
                     <span class="usage-info">
@@ -1496,9 +1496,16 @@
                 
                 if (details) {
                     detailsDiv.style.display = 'block';
-                    document.getElementById('studies-count').textContent = details.studies_count || 0;
-                    document.getElementById('coefficients-count').textContent = details.coefficients_count || 0;
-                    document.getElementById('primary-sources').textContent = details.primary_sources || 'Various';
+                    // Handle both API response structure and direct details
+                    const studiesCount = details.studies_analyzed?.length || details.studies_count || currentPredictionResult?.studies_count || 0;
+                    const coefficientsCount = details.coefficients_count || currentPredictionResult?.coefficients_count || 0;
+                    const sourcesCount = details.data_sources || details.primary_sources || 'Various';
+                    
+                    document.getElementById('studies-count').textContent = studiesCount;
+                    document.getElementById('coefficients-count').textContent = coefficientsCount;
+                    document.getElementById('primary-sources').textContent = sourcesCount;
+                    
+                    console.log('Grounding details updated:', { studiesCount, coefficientsCount, sourcesCount });
                 }
             } else {
                 statusIcon.textContent = '⚪';
@@ -1835,7 +1842,11 @@
                 
                 // Auto-generate narrative if enabled and in uncertainty range
                 if (options.auto_narrative && result.probability > 0.3 && result.probability < 0.7) {
-                    setTimeout(() => generateNarrative(), 1000);
+                    console.log('Auto-generating narrative...');
+                    setTimeout(() => {
+                        console.log('Auto-narrative timeout triggered');
+                        generateNarrative();
+                    }, 1000);
                 }
                 
             } catch (error) {
