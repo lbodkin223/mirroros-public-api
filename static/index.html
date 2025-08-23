@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MirrorOS - Advanced Prediction Engine</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
         * {
             margin: 0;
@@ -1511,24 +1514,31 @@
             const content = document.getElementById('narrative-content');
             const metadata = document.getElementById('narrative-metadata');
             
+            console.log('generateNarrative called - v2.0');
+            console.log('currentPredictionResult:', currentPredictionResult);
+            
             button.disabled = true;
             button.textContent = '⏳ Generating...';
             
             try {
                 // Use real chain of thought from API response
                 if (currentPredictionResult && currentPredictionResult.chain_of_thought) {
+                    console.log('Using real chain of thought data');
                     const chainOfThought = currentPredictionResult.chain_of_thought;
                     const narrative = generateRealNarrative(currentPredictionResult);
                     
-                    content.innerHTML = `<p>${narrative}</p>`;
+                    console.log('Generated narrative:', narrative);
+                    content.innerHTML = `<p style="white-space: pre-wrap;">${narrative}</p>`;
                     document.getElementById('word-count').textContent = narrative.split(' ').length;
                     document.getElementById('cost-estimate').textContent = '$0.05';
                     document.getElementById('usage-remaining').textContent = '2/3';
                     metadata.style.display = 'flex';
                 } else {
+                    console.log('No chain of thought data available');
                     content.innerHTML = '<em>No prediction data available. Please run a prediction first.</em>';
                 }
             } catch (error) {
+                console.error('Narrative generation error:', error);
                 content.innerHTML = '<em>Error generating narrative. Please try again.</em>';
             } finally {
                 button.disabled = false;
@@ -1538,7 +1548,10 @@
 
         // Generate narrative using real API chain of thought data and user's specific goal
         function generateRealNarrative(result) {
+            console.log('generateRealNarrative called with result:', result);
+            
             if (!result || !result.chain_of_thought) {
+                console.log('No chain of thought found in result');
                 return "No detailed analysis available. Please run a prediction to generate a narrative.";
             }
             
@@ -1547,10 +1560,18 @@
             const factors = result.key_success_factors || [];
             const risks = result.risk_factors || [];
             
+            console.log('Chain of thought:', chainOfThought);
+            console.log('Factors:', factors);
+            console.log('Risks:', risks);
+            
             // Get the original goal from the input
             const goalText = document.getElementById('goal-input').value || 'your goal';
             const timeframe = document.getElementById('timeframe').value || 'the planned timeframe';
             const context = document.getElementById('context').value || '';
+            
+            console.log('Goal text:', goalText);
+            console.log('Timeframe:', timeframe);
+            console.log('Context:', context);
             
             // Extract key parts from the goal
             const goalMatch = goalText.match(/I want to (.+?)(?:\s+within|\s+in|\.|$)/i);
